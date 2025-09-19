@@ -1,0 +1,15 @@
+# stock pricing
+marketstack:
+  key: "YOUR_MARKETSTACK_KEY"
+  stocks:
+    - AAPL
+    - MSFT
+
+fixer:
+  key: "YOUR_FIXER_KEY"
+  pairs:
+    - { from: "EUR", to: "USD" }
+    - { from: "GBP", to: "USD" }
+
+ledger:
+   price_db: "/tmp/prices.db"
