@@ -13,6 +13,7 @@ import (
 	"git.sr.ht/~atmosx/calais/pkg/providers"
 	"git.sr.ht/~atmosx/calais/pkg/providers/fixer"
 	"git.sr.ht/~atmosx/calais/pkg/providers/marketstack"
+	"git.sr.ht/~atmosx/calais/pkg/providers/yahoo"
 )
 
 var (
@@ -40,7 +41,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	stockProvider := marketstack.New(cfg.Marketstack.Key, http.DefaultClient, logger)
+	msProvider := marketstack.New(cfg.Marketstack.Key, http.DefaultClient, logger)
+	yahooProvider := yahoo.New(http.DefaultClient, logger)
 
 	var currencyProvider providers.CurrencyProvider
 	if cfg.Fixer.Key != "" {
@@ -50,9 +52,9 @@ func main() {
 	writer := ledger.NewWriter(cfg.Ledger.PriceDB)
 
 	for _, symbol := range cfg.Marketstack.Stocks {
-		sd, err := stockProvider.FetchStock(symbol)
+		sd, err := msProvider.FetchStock(symbol)
 		if err != nil {
-			logger.Error("failed to fetch stock", "symbol", symbol, "error", err)
+			logger.Error("failed to fetch marketstack stock", "symbol", symbol, "error", err)
 			continue
 		}
 		if err := writer.Append(doctype.Record{
@@ -64,7 +66,25 @@ func main() {
 			logger.Error("failed to write stock price", "symbol", symbol, "error", err)
 			continue
 		}
-		logger.Info("wrote stock price", "symbol", sd.Symbol, "price", sd.Close, "date", sd.Date)
+		logger.Info("wrote stock price", "source", "marketstack", "symbol", sd.Symbol, "price", sd.Close)
+	}
+
+	for _, symbol := range cfg.Yahoo.Stocks {
+		sd, err := yahooProvider.FetchStock(symbol)
+		if err != nil {
+			logger.Error("failed to fetch yahoo stock", "symbol", symbol, "error", err)
+			continue
+		}
+		if err := writer.Append(doctype.Record{
+			Time:   sd.Date,
+			Symbol: sd.Symbol,
+			Price:  sd.Close,
+			Kind:   "commodity",
+		}); err != nil {
+			logger.Error("failed to write stock price", "symbol", symbol, "error", err)
+			continue
+		}
+		logger.Info("wrote stock price", "source", "yahoo", "symbol", sd.Symbol, "price", sd.Close)
 	}
 
 	if currencyProvider != nil {
@@ -83,7 +103,7 @@ func main() {
 				logger.Error("failed to write currency price", "pair", p.From+"/"+p.To, "error", err)
 				continue
 			}
-			logger.Info("wrote currency price", "pair", p.From+"/"+p.To, "rate", cd.Rate, "date", cd.Date)
+			logger.Info("wrote currency price", "pair", p.From+"/"+p.To, "rate", cd.Rate)
 		}
 	}
 }

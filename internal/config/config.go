@@ -11,6 +11,11 @@ type MarketstackConfig struct {
 	Stocks []string `yaml:"stocks"`
 }
 
+// New: Yahoo configuration struct
+type YahooConfig struct {
+	Stocks []string `yaml:"stocks"`
+}
+
 type Pair struct {
 	From string `yaml:"from"`
 	To   string `yaml:"to"`
@@ -27,6 +32,7 @@ type LedgerConfig struct {
 
 type Config struct {
 	Marketstack MarketstackConfig `yaml:"marketstack"`
+	Yahoo       YahooConfig       `yaml:"yahoo"`
 	Fixer       FixerConfig       `yaml:"fixer"`
 	Ledger      LedgerConfig      `yaml:"ledger"`
 }
