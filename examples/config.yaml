@@ -5,6 +5,11 @@ marketstack:
     - AAPL
     - MSFT
 
+# No key required
+yahoo:
+  stocks:
+    - GOOG
+
 fixer:
   key: "YOUR_FIXER_KEY"
   pairs:

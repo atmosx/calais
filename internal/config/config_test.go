@@ -7,12 +7,17 @@ import (
 )
 
 func TestLoadConfig_Success(t *testing.T) {
-	yaml := `
+	yamlData := `
 marketstack:
   key: "test-ms-key"
   stocks:
     - AAPL
     - MSFT
+
+yahoo:
+  stocks:
+    - MTLN
+    - GOOG
 
 fixer:
   key: "test-fixer-key"
@@ -24,7 +29,7 @@ ledger:
   price_db: "/tmp/prices.db"
 `
 	path := filepath.Join(t.TempDir(), "config.yaml")
-	if err := os.WriteFile(path, []byte(yaml), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(yamlData), 0o600); err != nil {
 		t.Fatalf("could not create temp config: %v", err)
 	}
 
@@ -33,7 +38,6 @@ ledger:
 		t.Fatalf("LoadConfig failed: %v", err)
 	}
 
-	// marketstack
 	if cfg.Marketstack.Key != "test-ms-key" {
 		t.Errorf("expected Marketstack.Key 'test-ms-key', got %q", cfg.Marketstack.Key)
 	}
@@ -41,7 +45,13 @@ ledger:
 		t.Errorf("unexpected Marketstack.Stocks: %v", cfg.Marketstack.Stocks)
 	}
 
-	// fixer
+	if len(cfg.Yahoo.Stocks) != 2 {
+		t.Errorf("expected 2 yahoo stocks, got %d", len(cfg.Yahoo.Stocks))
+	}
+	if cfg.Yahoo.Stocks[0] != "MTLN" || cfg.Yahoo.Stocks[1] != "GOOG" {
+		t.Errorf("unexpected Yahoo.Stocks: %v", cfg.Yahoo.Stocks)
+	}
+
 	if cfg.Fixer.Key != "test-fixer-key" {
 		t.Errorf("expected Fixer.Key 'test-fixer-key', got %q", cfg.Fixer.Key)
 	}
@@ -65,7 +75,7 @@ func TestLoadConfig_FileNotFound(t *testing.T) {
 }
 
 func TestLoadConfig_MalformedYAML(t *testing.T) {
-	yaml := `
+	yamlData := `
 marketstack:
   key: "test"
   stocks: [AAPL
@@ -73,7 +83,7 @@ ledger:
   price_db: "/tmp/prices.db"
 `
 	path := filepath.Join(t.TempDir(), "malformed.yaml")
-	if err := os.WriteFile(path, []byte(yaml), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(yamlData), 0o600); err != nil {
 		t.Fatalf("could not create temp config: %v", err)
 	}
 
