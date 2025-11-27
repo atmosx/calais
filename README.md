@@ -10,7 +10,8 @@ make build
 
 # Configure
 
-Calais requires a [marketstack](https://marketstack.com/) and [fixer](https://fixer.io/) accounts. Populate the configuration files with the API keys:
+Calais can be used with Yahoo! finance (no API key required),  [marketstack](https://marketstack.com/) (requires API key)
+and [fixer](https://fixer.io/) (requires API key) accounts. Populate the configuration files with the API keys:
 
 ```yaml
 # stock pricing
@@ -20,6 +21,10 @@ marketstack:
     - AAPL
     - MSFT
 
+yahoo:
+  stocks:
+    - GOOG
+
 fixer:
   key: "YOUR_FIXER_KEY"
   pairs:
@@ -27,15 +32,14 @@ fixer:
     - { from: "GBP", to: "USD" }
 
 ledger:
-   price_db: "/tmp/prices.db"
+   price_db: "/opt/prices.db"
 ```
 
 # How to setup and use
 
 ```bash
-
 $ echo $LEDGER_PRICE_DB
-/Users/atma/.prices.db
+/opt/prices.db
 
 $ cat ~/.calais/config.yaml
 # stock pricing
@@ -51,7 +55,7 @@ fixer:
     - { from: "EUR", to: "USD" }
 
 ledger:
-   price_db: /Users/atma/.prices.db
+   price_db: /opt/.prices.db
 
 $ calais -c ~/.calais/config.yaml
 INFO[0000] wrote stock price                             date="2025-09-18 00:00:00 +0000 +0000" price=36.2 symbol=TITC.AT
