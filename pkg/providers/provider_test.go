@@ -5,7 +5,6 @@ import (
 	"time"
 )
 
-// TestStockData ensures the StockData struct can be created and its fields assigned correctly.
 func TestStockData(t *testing.T) {
 	date := time.Now()
 	sd := StockData{

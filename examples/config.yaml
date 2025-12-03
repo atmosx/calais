@@ -1,11 +1,9 @@
-# stock pricing
 marketstack:
   key: "YOUR_MARKETSTACK_KEY"
   stocks:
     - AAPL
     - MSFT
 
-# No key required
 yahoo:
   stocks:
     - GOOG
@@ -18,3 +16,12 @@ fixer:
 
 ledger:
    price_db: "/tmp/prices.db"
+
+pushover:
+  config:
+    token: PUSHOVER_APP_TOKEN
+    recipient: PUSHOVER_RECIPIENT_TOKEN
+  notify:
+    - { stock: "GOOG", price: 450 }
+  notify_currency:
+    - { from: "EUR", to: "USD", price: 1.08 }

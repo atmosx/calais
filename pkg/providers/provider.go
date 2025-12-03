@@ -2,7 +2,6 @@ package providers
 
 import "time"
 
-// StockData represents a single stock end-of-day record.
 type StockData struct {
 	Symbol string
 	Date   time.Time
@@ -10,7 +9,6 @@ type StockData struct {
 	Volume float64
 }
 
-// CurrencyData represents a single currency pair rate.
 type CurrencyData struct {
 	From string
 	To   string
@@ -18,7 +16,6 @@ type CurrencyData struct {
 	Date time.Time
 }
 
-// Provider interfaces
 type StockProvider interface {
 	FetchStock(symbol string) (*StockData, error)
 }

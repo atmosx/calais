@@ -11,7 +11,6 @@ type MarketstackConfig struct {
 	Stocks []string `yaml:"stocks"`
 }
 
-// New: Yahoo configuration struct
 type YahooConfig struct {
 	Stocks []string `yaml:"stocks"`
 }
@@ -30,11 +29,35 @@ type LedgerConfig struct {
 	PriceDB string `yaml:"price_db"`
 }
 
+// PushoverConfig holds the credentials for a single Pushover account.
+type PushoverConfig struct {
+	Token     string `yaml:"token"`
+	Recipient string `yaml:"recipient"`
+}
+
+type Notification struct {
+	Stock string  `yaml:"stock"`
+	Price float64 `yaml:"price"`
+}
+
+type CurrencyNotification struct {
+	From  string  `yaml:"from"`
+	To    string  `yaml:"to"`
+	Price float64 `yaml:"price"`
+}
+
+type Pushover struct {
+	Config         []PushoverConfig       `yaml:"config"`
+	Notify         []Notification         `yaml:"notify"`
+	NotifyCurrency []CurrencyNotification `yaml:"notify_currency"`
+}
+
 type Config struct {
 	Marketstack MarketstackConfig `yaml:"marketstack"`
 	Yahoo       YahooConfig       `yaml:"yahoo"`
 	Fixer       FixerConfig       `yaml:"fixer"`
 	Ledger      LedgerConfig      `yaml:"ledger"`
+	Pushover    Pushover          `yaml:"pushover"`
 }
 
 func LoadConfig(path string) (*Config, error) {
