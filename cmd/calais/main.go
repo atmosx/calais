@@ -13,6 +13,7 @@ import (
 	"git.sr.ht/~atmosx/calais/pkg/providers"
 	"git.sr.ht/~atmosx/calais/pkg/providers/fixer"
 	"git.sr.ht/~atmosx/calais/pkg/providers/marketstack"
+	"git.sr.ht/~atmosx/calais/pkg/providers/pushover"
 	"git.sr.ht/~atmosx/calais/pkg/providers/yahoo"
 )
 
@@ -41,6 +42,51 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Initialize Notifiers (Pushover)
+	// We use the Notifier interface so this list can hold email providers in the future.
+	var notifiers []pushover.Notifier
+
+	// Check if Pushover config exists and initialize providers
+	// Note: This assumes you have added `Pushover Pushover yaml:"pushover"` to your main Config struct.
+	for _, pConf := range cfg.Pushover.Config {
+		// Create a new Pushover client using the configuration
+		n := pushover.New(pConf.Token, pConf.Recipient, http.DefaultClient)
+		notifiers = append(notifiers, n)
+	}
+
+	// Helper function to check rules and send notifications
+	checkAndNotify := func(symbol string, currentPrice float64) {
+		for _, rule := range cfg.Pushover.Notify {
+			// Notify if the symbol matches and price meets the target (>=)
+			if rule.Stock == symbol && currentPrice >= rule.Price {
+				msg := fmt.Sprintf("Price Alert: %s has reached %.2f (Target: %.2f)", symbol, currentPrice, rule.Price)
+
+				for _, n := range notifiers {
+					if err := n.Send("Stock Alert", msg); err != nil {
+						logger.Error("failed to send notification", "type", "pushover", "error", err)
+					} else {
+						logger.Info("notification sent", "symbol", symbol, "price", currentPrice)
+					}
+				}
+			}
+		}
+	}
+
+	checkAndNotifyCurrency := func(from, to string, currentRate float64) {
+		for _, rule := range cfg.Pushover.NotifyCurrency {
+			if rule.From == from && rule.To == to && currentRate >= rule.Price {
+				msg := fmt.Sprintf("Currency Alert: %s/%s has reached %.4f (Target: %.4f)", from, to, currentRate, rule.Price)
+				for _, n := range notifiers {
+					if err := n.Send("Currency Alert", msg); err != nil {
+						logger.Error("failed to send currency notification", "type", "pushover", "error", err)
+					} else {
+						logger.Info("currency notification sent", "pair", from+"/"+to, "rate", currentRate)
+					}
+				}
+			}
+		}
+	}
+
 	msProvider := marketstack.New(cfg.Marketstack.Key, http.DefaultClient, logger)
 	yahooProvider := yahoo.New(http.DefaultClient, logger)
 
@@ -51,6 +97,7 @@ func main() {
 
 	writer := ledger.NewWriter(cfg.Ledger.PriceDB)
 
+	// Process Marketstack Stocks
 	for _, symbol := range cfg.Marketstack.Stocks {
 		sd, err := msProvider.FetchStock(symbol)
 		if err != nil {
@@ -67,8 +114,12 @@ func main() {
 			continue
 		}
 		logger.Info("wrote stock price", "source", "marketstack", "symbol", sd.Symbol, "price", sd.Close)
+
+		// Check for notifications
+		checkAndNotify(sd.Symbol, sd.Close)
 	}
 
+	// Process Yahoo Stocks
 	for _, symbol := range cfg.Yahoo.Stocks {
 		sd, err := yahooProvider.FetchStock(symbol)
 		if err != nil {
@@ -85,8 +136,12 @@ func main() {
 			continue
 		}
 		logger.Info("wrote stock price", "source", "yahoo", "symbol", sd.Symbol, "price", sd.Close)
+
+		// Check for notifications
+		checkAndNotify(sd.Symbol, sd.Close)
 	}
 
+	// Process Currencies
 	if currencyProvider != nil {
 		for _, p := range cfg.Fixer.Pairs {
 			cd, err := currencyProvider.FetchCurrency(p.From, p.To)
@@ -96,7 +151,7 @@ func main() {
 			}
 			if err := writer.Append(doctype.Record{
 				Time:   cd.Date,
-				Symbol: cd.From,
+				Symbol: cd.From, // Ideally this might record the pair, e.g., "EUR/USD" depending on your doctype logic
 				Price:  cd.Rate,
 				Kind:   "currency",
 			}); err != nil {
@@ -104,6 +159,9 @@ func main() {
 				continue
 			}
 			logger.Info("wrote currency price", "pair", p.From+"/"+p.To, "rate", cd.Rate)
+
+			// Check currency notifications
+			checkAndNotifyCurrency(cd.From, cd.To, cd.Rate)
 		}
 	}
 }
