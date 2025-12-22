@@ -92,3 +92,218 @@ ledger:
 		t.Error("expected YAML unmarshal error, got nil")
 	}
 }
+
+func TestLoadConfig_ValidWhenField(t *testing.T) {
+	tests := []struct {
+		name     string
+		yamlData string
+	}{
+		{
+			name: "when field is 'below'",
+			yamlData: `
+marketstack:
+  key: "test-key"
+pushover:
+  notify:
+    - stock: "AAPL"
+      price: 150.0
+      when: "below"
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+		},
+		{
+			name: "when field is empty",
+			yamlData: `
+marketstack:
+  key: "test-key"
+pushover:
+  notify:
+    - stock: "AAPL"
+      price: 150.0
+      when: ""
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+		},
+		{
+			name: "when field is omitted",
+			yamlData: `
+marketstack:
+  key: "test-key"
+pushover:
+  notify:
+    - stock: "AAPL"
+      price: 150.0
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+		},
+		{
+			name: "currency notification with 'below'",
+			yamlData: `
+fixer:
+  key: "test-key"
+pushover:
+  notify_currency:
+    - from: "EUR"
+      to: "USD"
+      price: 1.2
+      when: "below"
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+		},
+		{
+			name: "currency notification without when field",
+			yamlData: `
+fixer:
+  key: "test-key"
+pushover:
+  notify_currency:
+    - from: "EUR"
+      to: "USD"
+      price: 1.2
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "config.yaml")
+			if err := os.WriteFile(path, []byte(tt.yamlData), 0o600); err != nil {
+				t.Fatalf("could not create temp config: %v", err)
+			}
+
+			cfg, err := LoadConfig(path)
+			if err != nil {
+				t.Errorf("LoadConfig failed for valid config: %v", err)
+			}
+			if cfg == nil {
+				t.Error("expected config to be non-nil")
+			}
+		})
+	}
+}
+
+func TestLoadConfig_InvalidWhenField(t *testing.T) {
+	tests := []struct {
+		name        string
+		yamlData    string
+		expectedErr string
+	}{
+		{
+			name: "when field is 'above'",
+			yamlData: `
+marketstack:
+  key: "test-key"
+pushover:
+  notify:
+    - stock: "AAPL"
+      price: 150.0
+      when: "above"
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+			expectedErr: "invalid 'when' value: \"above\"",
+		},
+		{
+			name: "when field is 'greater'",
+			yamlData: `
+marketstack:
+  key: "test-key"
+pushover:
+  notify:
+    - stock: "MSFT"
+      price: 200.0
+      when: "greater"
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+			expectedErr: "invalid 'when' value: \"greater\"",
+		},
+		{
+			name: "when field is 'bellow' (typo)",
+			yamlData: `
+marketstack:
+  key: "test-key"
+pushover:
+  notify:
+    - stock: "GOOG"
+      price: 100.0
+      when: "bellow"
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+			expectedErr: "invalid 'when' value: \"bellow\"",
+		},
+		{
+			name: "currency notification with invalid 'when'",
+			yamlData: `
+fixer:
+  key: "test-key"
+pushover:
+  notify_currency:
+    - from: "EUR"
+      to: "USD"
+      price: 1.2
+      when: "above"
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+			expectedErr: "invalid 'when' value: \"above\"",
+		},
+		{
+			name: "multiple notifications with one invalid",
+			yamlData: `
+marketstack:
+  key: "test-key"
+pushover:
+  notify:
+    - stock: "AAPL"
+      price: 150.0
+      when: "below"
+    - stock: "MSFT"
+      price: 200.0
+      when: "invalid"
+ledger:
+  price_db: "/tmp/prices.db"
+`,
+			expectedErr: "invalid 'when' value: \"invalid\"",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "config.yaml")
+			if err := os.WriteFile(path, []byte(tt.yamlData), 0o600); err != nil {
+				t.Fatalf("could not create temp config: %v", err)
+			}
+
+			_, err := LoadConfig(path)
+			if err == nil {
+				t.Error("expected an error for invalid 'when' field, got nil")
+				return
+			}
+			if tt.expectedErr != "" && !contains(err.Error(), tt.expectedErr) {
+				t.Errorf("expected error to contain %q, got %q", tt.expectedErr, err.Error())
+			}
+		})
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || (len(s) > 0 && len(substr) > 0 && stringContains(s, substr)))
+}
+
+func stringContains(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
