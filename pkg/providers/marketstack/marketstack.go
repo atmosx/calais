@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"git.sr.ht/~atmosx/calais/pkg/log"
-	"git.sr.ht/~atmosx/calais/pkg/providers"
+	"github.com/atmosx/calais/pkg/log"
+	"github.com/atmosx/calais/pkg/providers"
 )
 
 const apiBaseURL = "https://api.marketstack.com/v2/eod"

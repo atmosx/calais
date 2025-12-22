@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"git.sr.ht/~atmosx/calais/pkg/doctype"
+	"github.com/atmosx/calais/pkg/doctype"
 )
 
 func TestWriter_Append(t *testing.T) {

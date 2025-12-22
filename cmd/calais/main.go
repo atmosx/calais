@@ -6,15 +6,15 @@ import (
 	"net/http"
 	"os"
 
-	"git.sr.ht/~atmosx/calais/internal/config"
-	"git.sr.ht/~atmosx/calais/pkg/doctype"
-	"git.sr.ht/~atmosx/calais/pkg/doctype/ledger"
-	"git.sr.ht/~atmosx/calais/pkg/log"
-	"git.sr.ht/~atmosx/calais/pkg/providers"
-	"git.sr.ht/~atmosx/calais/pkg/providers/fixer"
-	"git.sr.ht/~atmosx/calais/pkg/providers/marketstack"
-	"git.sr.ht/~atmosx/calais/pkg/providers/pushover"
-	"git.sr.ht/~atmosx/calais/pkg/providers/yahoo"
+	"github.com/atmosx/calais/internal/config"
+	"github.com/atmosx/calais/pkg/doctype"
+	"github.com/atmosx/calais/pkg/doctype/ledger"
+	"github.com/atmosx/calais/pkg/log"
+	"github.com/atmosx/calais/pkg/providers"
+	"github.com/atmosx/calais/pkg/providers/fixer"
+	"github.com/atmosx/calais/pkg/providers/marketstack"
+	"github.com/atmosx/calais/pkg/providers/pushover"
+	"github.com/atmosx/calais/pkg/providers/yahoo"
 )
 
 var (
