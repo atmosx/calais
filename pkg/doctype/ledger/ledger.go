@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"git.sr.ht/~atmosx/calais/pkg/doctype"
+	"github.com/atmosx/calais/pkg/doctype"
 )
 
 type Writer struct{ filePath string }

@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	"git.sr.ht/~atmosx/calais/pkg/log"
-	"git.sr.ht/~atmosx/calais/pkg/providers"
+	"github.com/atmosx/calais/pkg/log"
+	"github.com/atmosx/calais/pkg/providers"
 )
 
 type mockHTTPClient struct {
