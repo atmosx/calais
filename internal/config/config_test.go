@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -287,23 +288,10 @@ ledger:
 				t.Error("expected an error for invalid 'when' field, got nil")
 				return
 			}
-			if tt.expectedErr != "" && !contains(err.Error(), tt.expectedErr) {
+			if tt.expectedErr != "" && !strings.Contains(err.Error(), tt.expectedErr) {
 				t.Errorf("expected error to contain %q, got %q", tt.expectedErr, err.Error())
 			}
 		})
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || (len(s) > 0 && len(substr) > 0 && stringContains(s, substr)))
-}
-
-func stringContains(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
 
