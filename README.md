@@ -33,7 +33,20 @@ fixer:
 
 ledger:
    price_db: "/opt/prices.db"
+
+pushover:
+  config:
+    token: PUSHOVER_APP_TOKEN
+    recipient: PUSHOVER_RECIPIENT_TOKEN
+  notify:
+    - { stock: "GOOG", price: 450 }
+  notify_currency:
+    - { from: "EUR", to: "USD", price: 1.13, when: "below" }
 ```
+
+The configuration file is self-explanatory.
+The `when: "below"` keyword is optional and is supported by `notify` (stocks) and `notify_currency` (currencies).
+When present, it notifies the user when the value drops below the target price.
 
 # How to setup and use
 
