@@ -54,10 +54,22 @@ func main() {
 		notifiers = append(notifiers, n)
 	}
 
+	// Helper function to check if price meets the notification criteria based on when condition
+	shouldNotify := func(when string, currentPrice, targetPrice float64) bool {
+		// Default to "above" behavior when when is empty
+		if when == "" || when == "above" {
+			return currentPrice >= targetPrice
+		}
+		if when == "below" {
+			return currentPrice < targetPrice
+		}
+		return false
+	}
+
 	// Helper function to check rules and send notifications
 	checkAndNotify := func(symbol string, currentPrice float64) {
 		for _, rule := range cfg.Pushover.Notify {
-			if rule.Stock == symbol && (((rule.When == "" || rule.When == "above") && currentPrice >= rule.Price) || (rule.When == "below" && currentPrice < rule.Price)) {
+			if rule.Stock == symbol && shouldNotify(rule.When, currentPrice, rule.Price) {
 				msg := fmt.Sprintf("Price Alert: %s has reached %.2f (Target: %.2f)", symbol, currentPrice, rule.Price)
 
 				for _, n := range notifiers {
@@ -73,7 +85,7 @@ func main() {
 
 	checkAndNotifyCurrency := func(from, to string, currentRate float64) {
 		for _, rule := range cfg.Pushover.NotifyCurrency {
-			if rule.From == from && rule.To == to && (((rule.When == "" || rule.When == "above") && currentRate >= rule.Price) || (rule.When == "below" && currentRate < rule.Price)) {
+			if rule.From == from && rule.To == to && shouldNotify(rule.When, currentRate, rule.Price) {
 				msg := fmt.Sprintf("Currency Alert: %s/%s has reached %.4f (Target: %.4f)", from, to, currentRate, rule.Price)
 				for _, n := range notifiers {
 					if err := n.Send("Currency Alert", msg); err != nil {
