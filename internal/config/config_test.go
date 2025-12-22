@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -243,7 +244,7 @@ pushover:
 			wantErrorMsg: "invalid 'when' value in notify[0] for stock \"AAPL\"",
 		},
 		{
-			name: "invalid when field - typo bellow",
+			name: "invalid when field - typo below instead of below",
 			yamlData: `
 marketstack:
   key: "test-key"
@@ -295,24 +296,9 @@ pushover:
 			_, err := LoadConfig(path)
 			if err == nil {
 				t.Error("expected error for invalid 'when' field, got nil")
-			} else if tt.wantErrorMsg != "" && !contains(err.Error(), tt.wantErrorMsg) {
+			} else if tt.wantErrorMsg != "" && !strings.Contains(err.Error(), tt.wantErrorMsg) {
 				t.Errorf("expected error message to contain %q, got %q", tt.wantErrorMsg, err.Error())
 			}
 		})
 	}
-}
-
-// contains checks if a string contains a substring
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > 0 && len(substr) > 0 && containsHelper(s, substr)))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
