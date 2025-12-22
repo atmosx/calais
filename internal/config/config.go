@@ -29,7 +29,6 @@ type LedgerConfig struct {
 	PriceDB string `yaml:"price_db"`
 }
 
-// PushoverConfig holds the credentials for a single Pushover account.
 type PushoverConfig struct {
 	Token     string `yaml:"token"`
 	Recipient string `yaml:"recipient"`
@@ -38,12 +37,14 @@ type PushoverConfig struct {
 type Notification struct {
 	Stock string  `yaml:"stock"`
 	Price float64 `yaml:"price"`
+	When  string  `yaml:"when"`
 }
 
 type CurrencyNotification struct {
 	From  string  `yaml:"from"`
 	To    string  `yaml:"to"`
 	Price float64 `yaml:"price"`
+	When  string  `yaml:"when"`
 }
 
 type Pushover struct {

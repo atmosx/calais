@@ -24,4 +24,4 @@ pushover:
   notify:
     - { stock: "GOOG", price: 450 }
   notify_currency:
-    - { from: "EUR", to: "USD", price: 1.08 }
+    - { from: "EUR", to: "USD", price: 1.13, when: "below" }
