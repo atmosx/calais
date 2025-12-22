@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -70,5 +71,39 @@ func LoadConfig(path string) (*Config, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
+
+	// Validate 'when' field in notifications
+	if err := validateConfig(&cfg); err != nil {
+		return nil, err
+	}
+
 	return &cfg, nil
+}
+
+// validateConfig validates the configuration, particularly the 'when' field values
+func validateConfig(cfg *Config) error {
+	// Validate stock notifications
+	for i, notif := range cfg.Pushover.Notify {
+		if err := validateWhenField(notif.When); err != nil {
+			return fmt.Errorf("invalid 'when' value in notify[%d] for stock %q: %w", i, notif.Stock, err)
+		}
+	}
+
+	// Validate currency notifications
+	for i, notif := range cfg.Pushover.NotifyCurrency {
+		if err := validateWhenField(notif.When); err != nil {
+			return fmt.Errorf("invalid 'when' value in notify_currency[%d] for %s/%s: %w", i, notif.From, notif.To, err)
+		}
+	}
+
+	return nil
+}
+
+// validateWhenField validates that the 'when' field contains only supported values
+func validateWhenField(when string) error {
+	// Empty string and "below" are valid values
+	if when != "" && when != "below" {
+		return fmt.Errorf("must be either empty or \"below\", got %q", when)
+	}
+	return nil
 }
