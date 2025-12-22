@@ -47,6 +47,7 @@ pushover:
 The configuration file is self-explanatory.
 The `when: "below"` keyword is optional and is supported by `notify` (stocks) and `notify_currency` (currencies).
 When present, it notifies the user when the value drops below the target price.
+When omitted, the default behavior is to notify when the price reaches or exceeds the target value.
 
 # How to setup and use
 
