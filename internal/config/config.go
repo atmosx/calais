@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -61,6 +62,15 @@ type Config struct {
 	Pushover    Pushover          `yaml:"pushover"`
 }
 
+// validateWhen checks if the 'when' field has a valid value.
+// Valid values are: empty string ("") or "below".
+func validateWhen(when string) error {
+	if when == "" || when == "below" {
+		return nil
+	}
+	return fmt.Errorf("invalid 'when' value: %q (must be empty or \"below\")", when)
+}
+
 func LoadConfig(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -70,5 +80,20 @@ func LoadConfig(path string) (*Config, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
+
+	// Validate notification rules
+	for i, notif := range cfg.Pushover.Notify {
+		if err := validateWhen(notif.When); err != nil {
+			return nil, fmt.Errorf("notification rule %d for stock %q: %w", i, notif.Stock, err)
+		}
+	}
+
+	// Validate currency notification rules
+	for i, notif := range cfg.Pushover.NotifyCurrency {
+		if err := validateWhen(notif.When); err != nil {
+			return nil, fmt.Errorf("currency notification rule %d for %s/%s: %w", i, notif.From, notif.To, err)
+		}
+	}
+
 	return &cfg, nil
 }

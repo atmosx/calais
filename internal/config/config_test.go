@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -90,5 +91,145 @@ ledger:
 	_, err := LoadConfig(path)
 	if err == nil {
 		t.Error("expected YAML unmarshal error, got nil")
+	}
+}
+
+func TestLoadConfig_ValidWhenField(t *testing.T) {
+	tests := []struct {
+		name      string
+		whenValue string
+		wantError bool
+	}{
+		{
+			name:      "empty when field (default behavior)",
+			whenValue: "",
+			wantError: false,
+		},
+		{
+			name:      "when field set to below",
+			whenValue: "below",
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			whenLine := ""
+			if tt.whenValue != "" {
+				whenLine = fmt.Sprintf("\n      when: %q", tt.whenValue)
+			}
+
+			yamlData := fmt.Sprintf(`
+marketstack:
+  key: "test-key"
+  stocks:
+    - AAPL
+
+pushover:
+  notify:
+    - stock: "AAPL"
+      price: 150.0%s
+`, whenLine)
+
+			path := filepath.Join(t.TempDir(), "config.yaml")
+			if err := os.WriteFile(path, []byte(yamlData), 0o600); err != nil {
+				t.Fatalf("could not create temp config: %v", err)
+			}
+
+			cfg, err := LoadConfig(path)
+			if tt.wantError {
+				if err == nil {
+					t.Errorf("expected error for when=%q, got nil", tt.whenValue)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error for when=%q: %v", tt.whenValue, err)
+				}
+				if cfg == nil {
+					t.Error("expected config to be non-nil")
+				}
+			}
+		})
+	}
+}
+
+func TestLoadConfig_InvalidWhenField(t *testing.T) {
+	tests := []struct {
+		name      string
+		whenValue string
+	}{
+		{
+			name:      "invalid value: above",
+			whenValue: "above",
+		},
+		{
+			name:      "invalid value: greater",
+			whenValue: "greater",
+		},
+		{
+			name:      "typo: bellow",
+			whenValue: "bellow",
+		},
+		{
+			name:      "invalid value: less",
+			whenValue: "less",
+		},
+		{
+			name:      "invalid value: under",
+			whenValue: "under",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			yamlData := fmt.Sprintf(`
+marketstack:
+  key: "test-key"
+  stocks:
+    - AAPL
+
+pushover:
+  notify:
+    - stock: "AAPL"
+      price: 150.0
+      when: %q
+`, tt.whenValue)
+
+			path := filepath.Join(t.TempDir(), "config.yaml")
+			if err := os.WriteFile(path, []byte(yamlData), 0o600); err != nil {
+				t.Fatalf("could not create temp config: %v", err)
+			}
+
+			_, err := LoadConfig(path)
+			if err == nil {
+				t.Errorf("expected error for when=%q, got nil", tt.whenValue)
+			}
+		})
+	}
+}
+
+func TestLoadConfig_InvalidWhenFieldCurrency(t *testing.T) {
+	yamlData := `
+fixer:
+  key: "test-key"
+  pairs:
+    - { from: "EUR", to: "USD" }
+
+pushover:
+  notify_currency:
+    - from: "EUR"
+      to: "USD"
+      price: 1.2
+      when: "above"
+`
+
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	if err := os.WriteFile(path, []byte(yamlData), 0o600); err != nil {
+		t.Fatalf("could not create temp config: %v", err)
+	}
+
+	_, err := LoadConfig(path)
+	if err == nil {
+		t.Error("expected error for invalid currency notification when field, got nil")
 	}
 }
